@@ -57,13 +57,14 @@ const handleSubmit = async (e) => {
   e.preventDefault();
 
   const data = new FormData(form);
-  // console.log(chatContainer.innerHTML);
+
 
   // user's chatStripe :
 
   chatContainer.innerHTML += chatStripe(false, data.get("prompt"));
 
   form.reset();
+  console.log(data.get("prompt"));  
 
   // bot's chatStripe :
   const uniqueId = generateUniqueId();
@@ -73,6 +74,27 @@ const handleSubmit = async (e) => {
 
   const messageDiv = document.getElementById(uniqueId);
   loader(messageDiv);
+  const response = await fetch('http://localhost:5000',{
+    method: 'POST',
+    headers : {'Content-Type': 'application/json' },
+    body : JSON.stringify({
+      prompt : data.get('prompt'),
+    }),
+  })
+  clearInterval(loadInterval);
+  messageDiv.innerHTML = "";
+  if(response.ok){
+    const data = await response.json();
+    const parsedData = data.bot.trim();
+
+    typetext(messageDiv, parsedData);
+  }else{
+    const err = await response.text();
+
+    messageDiv.innerHTML = "Something went wrong";
+    console.error(err);
+    alert(err);
+  }
 };
 
 form.addEventListener("submit", handleSubmit);
